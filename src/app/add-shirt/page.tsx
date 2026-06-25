@@ -2,12 +2,14 @@
 
 import Link from "next/link";
 import { useRef, useState } from "react";
-import { supabase } from "../../lib/supabase";
+import { supabase } from "@/lib/supabase";
 
 export default function AddShirtPage() {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
+  const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+
   const [shirtName, setShirtName] = useState("");
   const [brand, setBrand] = useState("");
   const [purchasePrice, setPurchasePrice] = useState("");
@@ -34,8 +36,8 @@ export default function AddShirtPage() {
 
     if (!file) return;
 
-    const previewUrl = URL.createObjectURL(file);
-    setImagePreview(previewUrl);
+    setImageFile(file);
+    setImagePreview(URL.createObjectURL(file));
   };
 
   const handleSaveShirt = async () => {
@@ -53,11 +55,36 @@ export default function AddShirtPage() {
 
     setSaving(true);
 
+    let imageUrl: string | null = null;
+
+    if (imageFile) {
+      const fileExt = imageFile.name.split(".").pop();
+      const fileName = `${Date.now()}-${Math.random()
+        .toString(36)
+        .substring(2)}.${fileExt}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("shirt-images")
+        .upload(fileName, imageFile);
+
+      if (uploadError) {
+        setSaving(false);
+        setMessage(`Image upload error: ${uploadError.message}`);
+        return;
+      }
+
+      const { data } = supabase.storage
+        .from("shirt-images")
+        .getPublicUrl(fileName);
+
+      imageUrl = data.publicUrl;
+    }
+
     const { error } = await supabase.from("shirts").insert({
       sku: `TT-${Date.now()}`,
       name: shirtName,
       brand: brand,
-      image_url: null,
+      image_url: imageUrl,
       purchase_price: Number(purchasePrice),
       selling_price: Number(sellingPrice),
       quantity_s: sizes.S,
@@ -82,6 +109,7 @@ export default function AddShirtPage() {
     setSellingPrice("");
     setSizes({ S: 0, M: 0, L: 0, XL: 0 });
     setImagePreview(null);
+    setImageFile(null);
   };
 
   return (
