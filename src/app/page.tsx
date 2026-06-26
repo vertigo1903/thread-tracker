@@ -127,7 +127,7 @@ export default async function Home() {
               return (
                 <div
                   key={shirt.id}
-                  className="overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-900"
+                  className="overflow-hidden rounded-3xl border border-zinc-800 bg-zinc-950 transition-all duration-300 hover:border-red-500 hover:shadow-2xl hover:shadow-red-600/30 hover:-translate-y-1"
                 >
                   <div className="h-48 overflow-hidden bg-zinc-950">
   {shirt.image_url ? (
@@ -184,9 +184,21 @@ export default async function Home() {
                       </div>
                     </div>
 
-                    <button className="mt-5 w-full rounded-xl bg-red-600 py-3 font-bold hover:bg-red-700">
-                      Sell
-                    </button>
+                    <div className="mt-5 grid grid-cols-2 gap-3">
+  <Link
+    href={`/edit/${shirt.id}`}
+    className="rounded-xl border border-zinc-700 py-3 text-center font-bold hover:border-red-500"
+  >
+    ✏️ Edit
+  </Link>
+
+  <Link
+    href={`/sell/${shirt.id}`}
+    className="rounded-xl bg-red-600 py-3 text-center font-bold hover:bg-red-700"
+  >
+    💰 Sell
+  </Link>
+</div>
                   </div>
                 </div>
               );
