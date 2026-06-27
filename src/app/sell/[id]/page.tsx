@@ -92,13 +92,24 @@ export default function SellPage() {
       return;
     }
 
-    const { error: saleError } = await supabase.from("sales").insert({
-      shirt_id: shirt.id,
-      size: selectedSize,
-      quantity: 1,
-      revenue,
-      profit,
-    });
+    const {
+  data: { user },
+} = await supabase.auth.getUser();
+
+if (!user) {
+  setSelling(false);
+  setMessage("You must be logged in to sell a shirt.");
+  return;
+}
+
+const { error: saleError } = await supabase.from("sales").insert({
+  user_id: user.id,
+  shirt_id: shirt.id,
+  size: selectedSize,
+  quantity: 1,
+  revenue,
+  profit,
+});
 
     if (saleError) {
       setSelling(false);
