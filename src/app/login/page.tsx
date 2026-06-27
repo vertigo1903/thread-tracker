@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { FiEye, FiEyeOff } from "react-icons/fi";
 import { supabase } from "@/lib/supabase";
 
 export default function LoginPage() {
@@ -10,6 +11,9 @@ export default function LoginPage() {
   const [signupEmail, setSignupEmail] = useState("");
   const [signupPassword, setSignupPassword] = useState("");
   const [showSignup, setShowSignup] = useState(false);
+
+  const [showPassword, setShowPassword] = useState(false);
+  const [showSignupPassword, setShowSignupPassword] = useState(false);
 
   const [message, setMessage] = useState("");
 
@@ -53,6 +57,8 @@ export default function LoginPage() {
     }
 
     setShowSignup(false);
+    setSignupEmail("");
+    setSignupPassword("");
     setMessage("Account created! You can now sign in.");
   };
 
@@ -75,13 +81,23 @@ export default function LoginPage() {
           className="mb-4 w-full rounded-xl border border-zinc-700 bg-black p-4 outline-none transition focus:border-red-500"
         />
 
-        <input
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          className="mb-4 w-full rounded-xl border border-zinc-700 bg-black p-4 outline-none transition focus:border-red-500"
-        />
+        <div className="relative mb-4">
+          <input
+            type={showPassword ? "text" : "password"}
+            placeholder="Password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="w-full rounded-xl border border-zinc-700 bg-black p-4 pr-12 outline-none transition focus:border-red-500"
+          />
+
+          <button
+            type="button"
+            onClick={() => setShowPassword(!showPassword)}
+            className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-500 transition hover:text-red-500"
+          >
+            {showPassword ? <FiEyeOff size={22} /> : <FiEye size={22} />}
+          </button>
+        </div>
 
         {message && (
           <div className="mb-4 rounded-xl border border-zinc-700 bg-zinc-900 p-3 text-sm text-zinc-300">
@@ -134,13 +150,27 @@ export default function LoginPage() {
               className="mb-4 w-full rounded-xl border border-zinc-700 bg-black p-4 outline-none transition focus:border-red-500"
             />
 
-            <input
-              type="password"
-              placeholder="Password"
-              value={signupPassword}
-              onChange={(e) => setSignupPassword(e.target.value)}
-              className="mb-6 w-full rounded-xl border border-zinc-700 bg-black p-4 outline-none transition focus:border-red-500"
-            />
+            <div className="relative mb-6">
+              <input
+                type={showSignupPassword ? "text" : "password"}
+                placeholder="Password"
+                value={signupPassword}
+                onChange={(e) => setSignupPassword(e.target.value)}
+                className="w-full rounded-xl border border-zinc-700 bg-black p-4 pr-12 outline-none transition focus:border-red-500"
+              />
+
+              <button
+                type="button"
+                onClick={() => setShowSignupPassword(!showSignupPassword)}
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-500 transition hover:text-red-500"
+              >
+                {showSignupPassword ? (
+                  <FiEyeOff size={22} />
+                ) : (
+                  <FiEye size={22} />
+                )}
+              </button>
+            </div>
 
             <button
               type="button"
