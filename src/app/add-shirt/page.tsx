@@ -54,6 +54,15 @@ export default function AddShirtPage() {
     }
 
     setSaving(true);
+const {
+  data: { user },
+} = await supabase.auth.getUser();
+
+if (!user) {
+  setSaving(false);
+  setMessage("You must be logged in to add a shirt.");
+  return;
+}
 
     let imageUrl: string | null = null;
 
@@ -80,7 +89,7 @@ export default function AddShirtPage() {
       imageUrl = data.publicUrl;
     }
 
-    const { error } = await supabase.from("shirts").insert({
+    const { error } = await supabase.from("shirts").insert({user_id: user.id,
       sku: `TT-${Date.now()}`,
       name: shirtName,
       brand: brand,

@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 
 type Shirt = {
@@ -15,16 +18,40 @@ type Shirt = {
   quantity_xl: number;
 };
 
-export default async function Home() {
-  const { data: shirts, error } = await supabase
-    .from("shirts")
-    .select("*")
-    .eq("archived", false)
-    .order("created_at", { ascending: false });
+export default function Home() {
+  const [shirts, setShirts] = useState<Shirt[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const safeShirts = (shirts || []) as Shirt[];
+  useEffect(() => {
+    const loadDashboard = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
 
-  const totalInventory = safeShirts.reduce(
+      if (!user) {
+        window.location.href = "/login";
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from("shirts")
+        .select("*")
+        .eq("user_id", user.id)
+        .eq("archived", false)
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        console.error(error);
+      }
+
+      setShirts((data || []) as Shirt[]);
+      setLoading(false);
+    };
+
+    loadDashboard();
+  }, []);
+
+  const totalInventory = shirts.reduce(
     (total, shirt) =>
       total +
       shirt.quantity_s +
@@ -34,7 +61,7 @@ export default async function Home() {
     0
   );
 
-  const totalPotentialRevenue = safeShirts.reduce(
+  const totalPotentialRevenue = shirts.reduce(
     (total, shirt) =>
       total +
       (shirt.quantity_s +
@@ -45,7 +72,7 @@ export default async function Home() {
     0
   );
 
-  const totalPotentialProfit = safeShirts.reduce(
+  const totalPotentialProfit = shirts.reduce(
     (total, shirt) =>
       total +
       (shirt.quantity_s +
@@ -55,6 +82,14 @@ export default async function Home() {
         (Number(shirt.selling_price) - Number(shirt.purchase_price)),
     0
   );
+
+  if (loading) {
+    return (
+      <main className="min-h-screen bg-black text-white p-6">
+        Loading...
+      </main>
+    );
+  }
 
   return (
     <main className="min-h-screen bg-black text-white p-6">
@@ -89,7 +124,7 @@ export default async function Home() {
 
           <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4">
             <h2 className="text-gray-400">Listings</h2>
-            <p className="text-3xl font-bold">{safeShirts.length}</p>
+            <p className="text-3xl font-bold">{shirts.length}</p>
           </div>
         </div>
 
@@ -102,19 +137,13 @@ export default async function Home() {
 
         <h2 className="text-2xl font-bold mb-4">Inventory</h2>
 
-        {error && (
-          <div className="mb-4 rounded-xl border border-red-500 bg-red-950/40 p-4 text-red-200">
-            {error.message}
-          </div>
-        )}
-
-        {safeShirts.length === 0 ? (
+        {shirts.length === 0 ? (
           <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-8 text-center text-gray-400">
             No shirts yet.
           </div>
         ) : (
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {safeShirts.map((shirt) => {
+            {shirts.map((shirt) => {
               const totalQty =
                 shirt.quantity_s +
                 shirt.quantity_m +
@@ -130,18 +159,18 @@ export default async function Home() {
                   className="overflow-hidden rounded-3xl border border-zinc-800 bg-zinc-950 transition-all duration-300 hover:border-red-500 hover:shadow-2xl hover:shadow-red-600/30 hover:-translate-y-1"
                 >
                   <div className="h-48 overflow-hidden bg-zinc-950">
-  {shirt.image_url ? (
-    <img
-      src={shirt.image_url}
-      alt={shirt.name}
-      className="h-full w-full object-cover"
-    />
-  ) : (
-    <div className="flex h-full items-center justify-center bg-gradient-to-br from-zinc-800 to-zinc-950 text-6xl">
-      👕
-    </div>
-  )}
-</div>
+                    {shirt.image_url ? (
+                      <img
+                        src={shirt.image_url}
+                        alt={shirt.name}
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      <div className="flex h-full items-center justify-center bg-gradient-to-br from-zinc-800 to-zinc-950 text-6xl">
+                        👕
+                      </div>
+                    )}
+                  </div>
 
                   <div className="p-5">
                     <h3 className="text-xl font-bold">{shirt.name}</h3>
@@ -150,17 +179,23 @@ export default async function Home() {
                     <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
                       <div>
                         <p className="text-zinc-500">Bought</p>
-                        <p className="font-bold">${Number(shirt.purchase_price).toFixed(2)}</p>
+                        <p className="font-bold">
+                          ${Number(shirt.purchase_price).toFixed(2)}
+                        </p>
                       </div>
 
                       <div>
                         <p className="text-zinc-500">Selling</p>
-                        <p className="font-bold">${Number(shirt.selling_price).toFixed(2)}</p>
+                        <p className="font-bold">
+                          ${Number(shirt.selling_price).toFixed(2)}
+                        </p>
                       </div>
 
                       <div>
                         <p className="text-zinc-500">Profit Each</p>
-                        <p className="font-bold text-green-400">+${profit.toFixed(2)}</p>
+                        <p className="font-bold text-green-400">
+                          +${profit.toFixed(2)}
+                        </p>
                       </div>
 
                       <div>
@@ -185,20 +220,20 @@ export default async function Home() {
                     </div>
 
                     <div className="mt-5 grid grid-cols-2 gap-3">
-  <Link
-    href={`/edit/${shirt.id}`}
-    className="rounded-xl border border-zinc-700 py-3 text-center font-bold hover:border-red-500"
-  >
-    ✏️ Edit
-  </Link>
+                      <Link
+                        href={`/edit/${shirt.id}`}
+                        className="rounded-xl border border-zinc-700 py-3 text-center font-bold hover:border-red-500"
+                      >
+                        ✏️ Edit
+                      </Link>
 
-  <Link
-    href={`/sell/${shirt.id}`}
-    className="rounded-xl bg-red-600 py-3 text-center font-bold hover:bg-red-700"
-  >
-    💰 Sell
-  </Link>
-</div>
+                      <Link
+                        href={`/sell/${shirt.id}`}
+                        className="rounded-xl bg-red-600 py-3 text-center font-bold hover:bg-red-700"
+                      >
+                        💰 Sell
+                      </Link>
+                    </div>
                   </div>
                 </div>
               );
